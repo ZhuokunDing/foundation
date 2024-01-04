@@ -220,10 +220,35 @@ class FeedforwardRecurrent(CoreType):
         )
 
 
+@schema.lookup
+class FeedforwardRecurrentDecorr(CoreType):
+    definition = """
+    -> Feedforward
+    -> Recurrent
+    decorr_length       : int unsigned  # decorrelation length
+    decorr_weight       : decimal(9, 6) # decorrelation weight
+    decorr_rate         : decimal(6, 6) # decorrelation dropout
+    """
+
+    @rowproperty
+    def nn(self):
+        from fnn.model.cores import FeedforwardRecurrentDecorr
+
+        length, weight, rate = self.fetch1("decorr_length", "decorr_weight", "decorr_rate")
+
+        return FeedforwardRecurrentDecorr(
+            feedforward=(Feedforward & self).link.nn,
+            recurrent=(Recurrent() & self).link.nn,
+            decorr_length=length,
+            decorr_weight=weight,
+            decorr_rate=rate,
+        )
+
+
 # -- Core --
 
 
 @schema.link
 class Core:
-    links = [FeedforwardRecurrent]
+    links = [FeedforwardRecurrent, FeedforwardRecurrentDecorr]
     name = "core"
