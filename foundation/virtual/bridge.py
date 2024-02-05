@@ -12,7 +12,7 @@ pipe_gabor = dj.create_virtual_module("pipe_gabor", "pipeline_gabor")
 pipe_dot = dj.create_virtual_module("pipe_dot", "pipeline_dot")
 pipe_rdk = dj.create_virtual_module("pipe_rdk", "pipeline_rdk")
 pipe_netflix = dj.create_virtual_module("pipe_netflix", "pipeline_netflix")
-
+pipe_dot2 = dj.create_virtual_module("pipe_dot2", "pipeline_dot2")
 
 def resolve_pipe(key):
     """

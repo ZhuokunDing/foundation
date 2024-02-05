@@ -118,6 +118,19 @@ class Frame(VideoType):
         return Frame & self
 
 
+@schema.lookup
+class DotSetSequence(VideoType):
+    definition = """
+    -> pipe_stim.DotSetSequence
+    """
+
+    @rowproperty
+    def compute(self):
+        from foundation.stimulus.compute.video import DotSetSequence
+
+        return DotSetSequence & self
+
+
 @schema.list
 class FrameList(VideoType):
     keys = [pipe_stim.Frame]
@@ -155,6 +168,7 @@ class Video:
         Trippy,
         GaborSequence,
         DotSequence,
+        DotSetSequence,
         RdkSequence,
         Frame,
         FrameList,

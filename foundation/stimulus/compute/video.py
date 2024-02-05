@@ -4,7 +4,7 @@ import numpy as np
 from djutils import keys, rowproperty, rowmethod, MissingError, merge
 from foundation.utils import video
 from foundation.virtual import stimulus
-from foundation.virtual.bridge import pipe_stim, pipe_gabor, pipe_dot, pipe_rdk
+from foundation.virtual.bridge import pipe_stim, pipe_gabor, pipe_dot, pipe_rdk, pipe_dot2
 
 
 # ---------------------------- Video ----------------------------
@@ -235,6 +235,34 @@ class Frame(VideoType):
             return video.Video([blank, image, blank], times=[0, pre_blank, pre_blank + duration])
         else:
             return video.Video([image, blank], times=[0, duration])
+
+
+@keys
+class DotSetSequence(VideoType):
+    """Single Dot Video"""
+
+    @property
+    def keys(self):
+        return [
+            pipe_stim.DotSetSequence,
+        ]
+
+    @rowproperty
+    def video(self):
+        frames = (
+            pipe_stim.DotSetSequence
+            * pipe_dot2.DotSetSequence
+            * pipe_dot2.DotFramePtb
+            & self.item
+        ).fetch("rendered_frame", order_by="sequence_index")
+        nframes = (
+            pipe_stim.DotSetSequence
+            * pipe_dot2.SequenceSize
+            & self.item
+        ).fetch1("size")
+        assert len(frames) == nframes, f"DotSetSequence {self.item} is missing frames"
+        fps = (pipe_stim.DotSetSequence & self.item).fetch1("fps")
+        return video.Video.fromarray(np.stack(frames, axis=0), period=1 / fps)
 
 
 @keys
