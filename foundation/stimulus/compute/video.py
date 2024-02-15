@@ -1,11 +1,11 @@
 import io
 import av
 import numpy as np
-from djutils import keys, rowproperty, rowmethod, MissingError, merge
+from djutils import keys, rowproperty, rowmethod, MissingError, merge, U
 from foundation.utils import video
 from foundation.virtual import stimulus
 from foundation.virtual.bridge import pipe_stim, pipe_gabor, pipe_dot, pipe_rdk, pipe_dot2
-
+from collections import namedtuple
 
 # ---------------------------- Video ----------------------------
 
@@ -40,6 +40,35 @@ class DirectionType(VideoType):
             start time of direction (seconds)
         float
             end time of direction (seconds)
+        """
+        raise NotImplementedError()
+
+
+dot = namedtuple("Dot", ["height", "width", "y", "x", "on"])
+
+class SquareDotType(VideoType):
+    """Dot Mapping Video"""
+
+    @rowmethod
+    def dots(self) -> dot:
+        """
+        Yields:
+        ------
+        dot: namedtuple with the following fields
+            height: int
+                height of the canvas (pixels)
+            width: int
+                width of the canvas (pixels)
+            y: int
+                y location of dot (pixels)
+            x: int
+                x location of dot (pixels)
+            on: bool
+                dot is on or off, True for on, False for off
+        start: float
+            start time of dot (seconds)
+        end: float
+            end time of dot (seconds)
         """
         raise NotImplementedError()
 
@@ -238,7 +267,7 @@ class Frame(VideoType):
 
 
 @keys
-class DotSetSequence(VideoType):
+class DotSetSequence(SquareDotType):
     """Single Dot Video"""
 
     @property
@@ -249,20 +278,53 @@ class DotSetSequence(VideoType):
 
     @rowproperty
     def video(self):
-        frames = (
+        dots = (
             pipe_stim.DotSetSequence
             * pipe_dot2.DotSetSequence
             * pipe_dot2.DotFramePtb
             & self.item
         ).fetch("rendered_frame", order_by="sequence_index")
-        nframes = (
+        ndots = (
             pipe_stim.DotSetSequence
             * pipe_dot2.SequenceSize
             & self.item
         ).fetch1("size")
-        assert len(frames) == nframes, f"DotSetSequence {self.item} is missing frames"
-        fps = (pipe_stim.DotSetSequence & self.item).fetch1("fps")
-        return video.Video.fromarray(np.stack(frames, axis=0), period=1 / fps)
+        assert len(dots) == ndots, f"DotSetSequence {self.item} is missing frames"
+        n_frames, fps = (pipe_stim.DotSetSequence & self.item).fetch1("n_frames", "fps")
+        # repeat each frame n_frames times
+        frames = np.repeat(dots, n_frames)
+        frames = np.stack(frames, axis=0)
+        return video.Video.fromarray(frames, period=1/fps)
+
+    @rowmethod
+    def dots(self):
+        dots = (
+            pipe_stim.DotSetSequence
+            * pipe_dot2.DotSetSequence
+            * pipe_dot2.Dot
+            & self.item
+        )
+        assert (dots.fetch('dot_type') == 'GraySquare').all(), "Dot type not supported"
+        dots = dots * pipe_dot2.Dot.GraySquare
+        height, width, y, x, dot_px, bg_px = dots.fetch(
+            "size_y", "size_x", "loc_y", "loc_x", "dot", "background",
+            order_by="sequence_index ASC"
+        )
+        on = dot_px > bg_px
+        n_frames, fps = (pipe_stim.DotSetSequence & self.item).fetch1("n_frames", "fps")
+        time_per_dot = float(n_frames / fps)
+        for i in range(len(dots)):
+            yield (
+                dot(
+                    height=int(height[i]),
+                    width=int(width[i]),
+                    y=int(y[i]),
+                    x=int(x[i]),
+                    on=on[i],
+                ),
+                i * time_per_dot,
+                (i + 1) * time_per_dot,
+            )
 
 
 @keys
