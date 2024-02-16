@@ -332,7 +332,7 @@ class _VisualScan(VisualType, RecordingType):
         # load trials
         for trial_id in trial_ids:
 
-            traces = (recording.ResampledTraces & key & {"trial_id": trial_id}).fetch1("traces")
+            traces = (recording.ResampledTraces & key & {"trial_id": trial_id}).fetch1("traces")  # [time, units]
             yield transform(traces).astype(np.float32)[:, order]
 
     @rowmethod

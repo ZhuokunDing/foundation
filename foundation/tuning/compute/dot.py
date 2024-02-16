@@ -1,5 +1,5 @@
 from djutils import keys, rowproperty, cache_rowproperty, merge
-from foundation.virtual import recording, stimulus, utility, tuning
+from foundation.virtual import recording, stimulus, utility
 import numpy as np
 import torch
 import pandas as pd
@@ -71,7 +71,7 @@ class RecordingDot(DotResponseType):
         from foundation.stimulus.compute.video import SquareDotType
         from foundation.recording.compute.visual import VisualTrials
         from foundation.recording.trace import TraceSet, Trace
-        from foundation.recording import scan
+        from foundation.scan.experiment import Scan
         from foundation.utility.resample import Offset, Rate
         from foundation.utility.response import Burnin
 
@@ -79,7 +79,7 @@ class RecordingDot(DotResponseType):
         all_trial_filt = (recording.TrialFilterSet & "not members").proj()
         trialset = dict(
             trialset_id=(
-                recording.ScanTrials & (scan.Scan & self.item) & all_trial_filt
+                recording.ScanTrials & (Scan & self.item) & all_trial_filt
             ).fetch1("trialset_id")
         )  # all trials shown in the scan
 

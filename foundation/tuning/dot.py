@@ -10,12 +10,12 @@ class DotOnOff:
     on           : bool     # True for on, False for off
     """
 
-# ---------------------------- DotResponse ----------------------------
+# ---------------------------- DotResp ----------------------------
 
-# -- DotResponse Interface --
+# -- DotResp Interface --
 
 
-class DotResponseType:
+class DotRespType:
     """Tuning Dot"""
 
     @rowproperty
@@ -29,11 +29,11 @@ class DotResponseType:
         raise NotImplementedError()
     
 
-# -- DotResponse Types --
+# -- DotResp Types --
     
 
 @schema.lookup
-class RecordingDot(DotResponseType):
+class RecordingDot(DotRespType):
     definition = """
     -> recording.ScanUnits
     -> recording.TrialFilterSet
@@ -53,21 +53,21 @@ class RecordingDot(DotResponseType):
         return RecordingDot & self
     
 
-# -- DotResponse --
+# -- DotResp --
     
 
 @schema.link
-class DotResponse:
+class DotResp:
     links = [RecordingDot]
-    name = "dot_response"
-    comment = "dot response"
+    name = "dot_resp"
+    comment = "responses to single dot stimuli"
 
 
 # -- Computed Dot STA --
 @schema.computed
 class DotSta:
     definition = """
-    -> DotResponse
+    -> DotResp
     -> DotOnOff
     ---
     sta             : longblob     # [height, width, traces], traces are ordered by unit_id

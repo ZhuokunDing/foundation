@@ -142,8 +142,6 @@ class ScanPupilFilter:
         key = merge(trials, self, Trial.ScanTrial, scan.PupilNans) & "nans < max_nans"
 
         return trials & key.proj()
-
-
 # -- Trial Filter --
 
 
